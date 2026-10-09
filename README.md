@@ -3,6 +3,7 @@
 ### AI generated documentation
 
 - [Usage and setup](docs_agent/usage.md): Credentials and execution instructions.
+- [Rayyan exports](docs_agent/rayyan_exports.md): Native export preparation and auditing.
 - [CSV conversion](docs_agent/csv_conversion.md): Input conversion workflow.
 - [Database searches](docs_agent/database_search.md): Search scope and implementation.
 - [Manual search links](docs_agent/manual_search_links.md): Database links and copyable queries.

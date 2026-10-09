@@ -1,12 +1,14 @@
 # CSV conversion
 
+For new manual searches, use the [native export and Rayyan workflow](rayyan_exports.md) to preserve additional metadata without converting to this older CSV schema.
+
 `parse_records.py` converts the combined candidate records into one CSV per database. Output columns match `excel-example.csv`; each input record is assigned to its alphabetically first database.
 
 ## Run from the repository root
 
 Use Python 3.10 or newer and uv. The dependencies are listed in `requirements.txt`.
 
-CSV conversion does not need API credentials or `config.py`. That private file is used by the separate database search runner; see the [README](../README.md#api-credentials) for configuration.
+CSV conversion does not need API credentials or `config.py`. That private file is used by the separate database search runner; see the [usage and setup](usage.md#api-credentials) for configuration.
 
 The normal command is:
 

@@ -4,6 +4,8 @@ Run with [uv](https://docs.astral.sh/uv/):
 
 ## Manual searches without API keys
 
+Prepare downloaded native exports with the [Rayyan export workflow](rayyan_exports.md), which preserves metadata and audits result counts without using the older fixed-column CSV conversion.
+
 Use the [manual search links and copyable queries](manual_search_links.md). PubMed links contain the query; IEEE links use a browser URL pattern that still needs validation. Scopus, Web of Science, EBSCO, and ACM have launch links with queries to paste and instructions for manual filters.
 
 Regenerate the document without making database requests:
