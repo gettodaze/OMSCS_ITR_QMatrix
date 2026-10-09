@@ -1,9 +1,15 @@
 ## Documentation
 
-- Agent docs: [Usage and setup](docs_agent/usage.md).
-- Agent docs: [CSV conversion](docs_agent/csv_conversion.md) and [database searches](docs_agent/database_search.md).
-- Manual workflow: [search links and queries](docs_agent/manual_search_links.md).
-- Copy of Chris's working doc from google drive: [Check-in 2 working doc](<docs_human/Check-in 2 working doc.md>)
+### AI generated documentation
+
+- [Usage and setup](docs_agent/usage.md): Credentials and execution instructions.
+- [CSV conversion](docs_agent/csv_conversion.md): Input conversion workflow.
+- [Database searches](docs_agent/database_search.md): Search scope and implementation.
+- [Manual search links](docs_agent/manual_search_links.md): Database links and copyable queries.
+
+### Manually generated documentation
+
+- [Check-in 2 working doc](<docs_human/Check-in 2 working doc.md>): Chris's research working document.
 
 ## AI Usage
 Codex was used in this repo.
