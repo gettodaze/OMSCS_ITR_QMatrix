@@ -1,5 +1,7 @@
 ## Documentation
 
+Input and output files are ignored by Git because database licenses and abstract copyrights may restrict public redistribution.
+
 ### AI generated documentation
 
 - [Data sharing](docs_agent/data_sharing.md): Export permissions and private storage.
