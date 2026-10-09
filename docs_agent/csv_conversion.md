@@ -1,6 +1,6 @@
 # CSV conversion
 
-For new manual searches, use the [native export and Rayyan workflow](rayyan_exports.md) to preserve additional metadata without converting to this older CSV schema.
+For new manual searches, use the [native export and Rayyan workflow](rayyan_exports.md) and [Colab labeling notebook](colab.md) to preserve additional metadata without converting to this older CSV schema.
 
 `parse_records.py` converts the combined candidate records into one CSV per database. Output columns match `excel-example.csv`; each input record is assigned to its alphabetically first database.
 
@@ -16,32 +16,17 @@ The normal command is:
 uv run --no-project --with-requirements requirements.txt python parse_records.py
 ```
 
-**Current CLI limitation:** `main()` calls `update_records()`, which opens `IPython.embed()`. That function has no return statement, so exiting IPython returns `None` and the subsequent write fails. This command currently serves as an interactive inspection entry point.
-
-To convert the file with the existing read/write functions, bypass that unfinished hook:
-
-```bash
-uv run --no-project --with-requirements requirements.txt python - <<'PY'
-from pathlib import Path
-from parse_records import read_records, write_records
-
-records = read_records(Path("input.csv"))
-directory = write_records(records, Path("output"))
-print(f"Wrote {len(records)} records to {directory}")
-PY
-```
-
-Change the two paths in this example to use a different input or output root. The CLI also accepts these paths, subject to the hook limitation:
+The command reads `input/input.csv`, applies the shared title/abstract/keyword labeling rules, and writes one CSV per assigned database. To select another input or output location:
 
 ```bash
 uv run --no-project --with-requirements requirements.txt python parse_records.py other.csv --output outputs
 ```
 
-Use `--help` to display the CLI arguments without entering IPython.
+Use `--help` to display the CLI arguments without processing records.
 
 ## Input and row structures
 
-The input must have the column names used by `input.csv`, including capitalization and spaces. `read_records()` uses pandas to read UTF-8 CSVs, including files with a byte-order mark. It reads cells as strings and preserves empty cells instead of converting them to `NaN`.
+The input must have the column names used by `input/input.csv`, including capitalization and spaces. `read_records()` uses pandas to read UTF-8 CSVs, including files with a byte-order mark. It reads cells as strings and preserves empty cells instead of converting them to `NaN`.
 
 Each row becomes a frozen `SourceRecord` through `SourceRecord.from_csv_row()`:
 
@@ -121,4 +106,4 @@ Each database represented in the input gets a file named directly after it, incl
 - The converter applies no date, language, inclusion, or exclusion filters. Screening fields do not affect which rows are written.
 - A write failure can leave a partially populated output directory.
 
-The read/write functions were previously checked against the supplied 836-record input for matching example headers and exactly one database assignment per record. That check bypassed the unfinished interactive update hook.
+The read/write functions were previously checked against the supplied 836-record input for matching example headers and exactly one database assignment per record. That historical check did not validate labeling accuracy.

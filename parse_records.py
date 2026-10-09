@@ -17,8 +17,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Mapping
 
-import pandas as pd
-
 
 class Label(str, Enum):
     """Descriptive categories from the Check-in 2 working doc (RQ1–RQ2)."""
@@ -161,6 +159,8 @@ class OutputRecord:
 
 
 def read_records(path: Path) -> list[SourceRecord]:
+    import pandas as pd
+
     # Read strings and preserve empty fields instead of converting them to NaN.
     frame = pd.read_csv(path, dtype=str, keep_default_na=False, encoding="utf-8-sig")
     return [SourceRecord.from_csv_row(row) for row in frame.to_dict(orient="records")]
@@ -186,13 +186,18 @@ TASK_PATTERNS: dict[Label, str] = {
 
 
 def get_labels(record: SourceRecord) -> list[Label]:
+    """Suggest labels for a legacy candidate record using the shared rules."""
+    return get_labels_from_text(record.title, record.abstract, record.keywords)
+
+
+def get_labels_from_text(title: str, abstract: str, keywords: tuple[str, ...]) -> list[Label]:
     """Suggest descriptive labels using title, abstract, and keywords.
 
     These keyword heuristics follow the working doc, not final eligibility
     decisions. Mentions can describe prior work; full-text review is needed
     to confirm a study's method and domain. Missing evidence gets no label.
     """
-    text = "\n".join((record.title, record.abstract, "; ".join(record.keywords)))
+    text = "\n".join((title, abstract, "; ".join(keywords)))
     text = re.sub(r"[-‐‑–—_]", " ", text.casefold())
     text = re.sub(r"[^\S\n]+", " ", text)
     matched = {label for label, pattern in LABEL_PATTERNS.items() if re.search(pattern, text)}
@@ -215,6 +220,8 @@ def update_records(records: list[SourceRecord]) -> list[SourceRecord]:
 
 
 def write_records(records: list[SourceRecord], output_root: Path) -> Path:
+    import pandas as pd
+
     # Assign each record to its alphabetically first database and convert it.
     grouped: dict[str, list[OutputRecord]] = defaultdict(list)
     for record in records:

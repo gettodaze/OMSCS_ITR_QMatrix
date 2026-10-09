@@ -67,6 +67,10 @@ The tool retains all tags, repeated fields and continuation text in import files
 
 New searches can differ because of indexing updates and search dates. Actual result equivalence can only be checked after the new exports and logged hit counts are available.
 
+## Label before import
+
+Use the [Colab notebook and native labeling workflow](colab.md) to read these exports from Drive and generate suggested labels, a review CSV and a JSON copy retaining every source tag. The existing labeling rules work directly on native records; the old candidate CSV is optional.
+
 ## Import into Rayyan
 
 Use the files in `by_database/` for clearly named imports such as “Scopus — 2026-10-09”. Alternatively upload the `combined.*` files if a combined import is preferable. Choose one set; importing both duplicates every record.

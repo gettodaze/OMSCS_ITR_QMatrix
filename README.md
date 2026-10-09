@@ -4,6 +4,8 @@ Input and output files are ignored by Git because database licenses and abstract
 
 ### AI generated documentation
 
+- [Colab workflow](docs_agent/colab.md): Drive setup and native export labeling.
+- [Colab notebook](docs_agent/label_exports.ipynb): Run labeling from Google Drive.
 - [Data sharing](docs_agent/data_sharing.md): Export permissions and private storage.
 
 - [Usage and setup](docs_agent/usage.md): Credentials and execution instructions.

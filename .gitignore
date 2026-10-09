@@ -6,3 +6,5 @@ __pycache__
 /output/
 /input.csv
 /excel-example.csv
+
+.ipynb_checkpoints/

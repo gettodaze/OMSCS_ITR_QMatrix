@@ -13,6 +13,30 @@ import re
 FORMATS = {'.ris': 'ris', '.nbib': 'nbib', '.enw': 'enw'}
 
 
+def export_paths(root: Path) -> list[Path]:
+    files = sorted(p for p in root.rglob('*') if p.is_file() and p.suffix.lower() in {*FORMATS, '.txt'})
+    if not files:
+        raise ValueError(f'No RIS, NBIB or EndNote exports under {root}')
+    for path in files:
+        if len(path.relative_to(root).parts) < 2:
+            raise ValueError(f'Place {path.name} inside a database-named subfolder')
+    return files
+
+
+def read_export(path: Path):
+    raw = path.read_bytes()
+    text = raw.decode('utf-8-sig')
+    kind = FORMATS.get(path.suffix.lower())
+    if kind is None:
+        first_line = text.lstrip().splitlines()[0] if text.strip() else ''
+        kind = ('nbib' if first_line.startswith('PMID-') else
+                'ris' if first_line.startswith('TY  -') else
+                'enw' if first_line.startswith('%0') else None)
+        if kind is None:
+            raise ValueError(f'{path.name}: .txt file is not tagged RIS, PubMed or EndNote')
+    return raw, text, kind, parse_export(text, kind)
+
+
 def parse_export(text: str, kind: str) -> list[dict[str, list[str]]]:
     """Read tags for auditing only; concatenation uses the original text."""
     if kind not in FORMATS.values():
@@ -23,7 +47,7 @@ def parse_export(text: str, kind: str) -> list[dict[str, list[str]]]:
     patterns = {
         'ris': re.compile(r'^([A-Z0-9]{2})  -\s?(.*)$'),
         'nbib': re.compile(r'^([A-Z0-9]{2,4})\s*-\s?(.*)$'),
-        'enw': re.compile(r'^%([A-Za-z0-9@])\s?(.*)$'),
+        'enw': re.compile(r'^%(\S)\s?(.*)$'),
     }
     start = {'ris': 'TY', 'nbib': 'PMID', 'enw': '0'}[kind]
     for number, line in enumerate(text.splitlines(), 1):
@@ -78,6 +102,10 @@ def metadata(record, kind):
     }[kind]
     title, abstract, doi, authors, keywords, types, dates = [values(record, *group) for group in tags]
     if kind == 'nbib':
+        authors = values(record, 'FAU') or values(record, 'AU')
+    elif kind == 'ris':
+        authors = values(record, 'AU') or values(record, 'A1')
+    if kind == 'nbib':
         doi = [v.removesuffix(' [doi]') for v in doi if v.endswith(' [doi]')]
     years = [m.group() for v in dates if (m := re.search(r'\b(?:19|20)\d{2}\b', v))]
     return {'title': title, 'abstract': abstract, 'doi': doi, 'authors': authors,
@@ -129,9 +157,7 @@ def read_baseline(path):
 def prepare(root: Path, output: Path, baseline: Path | None = None, counts: Path | None = None):
     if output.resolve().is_relative_to(root.resolve()):
         raise ValueError('Output must be outside the input export folder')
-    files = sorted(p for p in root.rglob('*') if p.is_file() and p.suffix.lower() in {*FORMATS, '.txt'})
-    if not files:
-        raise ValueError(f'No RIS, NBIB or EndNote exports under {root}')
+    files = export_paths(root)
     expected = {}
     if counts:
         with counts.open(encoding='utf-8-sig', newline='') as handle:
@@ -146,20 +172,8 @@ def prepare(root: Path, output: Path, baseline: Path | None = None, counts: Path
     # Validate everything before writing outputs.
     for path in files:
         relative = path.relative_to(root)
-        if len(relative.parts) < 2:
-            raise ValueError(f'Place {relative} inside a database-named subfolder')
         database = relative.parts[0]
-        raw = path.read_bytes()
-        text = raw.decode('utf-8-sig')
-        kind = FORMATS.get(path.suffix.lower())
-        if kind is None:
-            first_line = text.lstrip().splitlines()[0] if text.strip() else ''
-            kind = ('nbib' if first_line.startswith('PMID-') else
-                    'ris' if first_line.startswith('TY  -') else
-                    'enw' if first_line.startswith('%0') else None)
-            if kind is None:
-                raise ValueError(f'{relative}: .txt file is not tagged RIS, PubMed or EndNote')
-        parsed = parse_export(text, kind)
+        raw, text, kind, parsed = read_export(path)
         data = [metadata(r, kind) for r in parsed]
         records[database].extend(data)
         # Separate complete records, preserving all tags and multiline content.
