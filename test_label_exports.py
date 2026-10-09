@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from label_exports import label_exports
+from label_exports import ExportRecord, default_labels, label_exports
 from parse_records import Label, get_labels_from_text
 from prepare_rayyan import metadata, parse_export
 
@@ -71,6 +71,51 @@ class LabelExportTests(unittest.TestCase):
                 label_exports(root.parent, bad_output)
             self.assertFalse(bad_output.exists())
 
+    def test_custom_callback_receives_full_typed_record(self):
+        seen = []
+
+        def custom_labels(record: ExportRecord) -> list[Label | str]:
+            self.assertIsInstance(record, ExportRecord)
+            self.assertEqual(record.journal, 'Synthetic Journal')
+            self.assertEqual(record.authors[0], 'Example, First')
+            self.assertEqual(record.source_index, 1)
+            self.assertTrue(record.source_file.startswith(record.database + '/'))
+            seen.append(record)
+            labels: list[Label | str] = list(default_labels(record))
+            if record.source_fields.get('ZZ') == ('Unknown field', 'Second value'):
+                self.assertEqual(record.notes, 'Original note')
+                self.assertEqual(record.volume, '2')
+                self.assertEqual(record.document_type, 'JOUR')
+                labels.extend(['provider-specific label', 'provider-specific label'])
+                with self.assertRaises(TypeError):
+                    record.source_fields['ZZ'] = ('changed',)
+            return labels
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'exports'
+            self.make_exports(root)
+            output = Path(directory) / 'custom'
+            summary = label_exports(root, output, labeler=custom_labels)
+            self.assertEqual(len(seen), 3)
+            self.assertEqual(summary['by_label']['provider-specific label'], 1)
+            self.assertTrue(summary['labeling_method'].startswith('Custom callback:'))
+            records = [json.loads(line) for line in (output / 'labelled_records.jsonl').read_text().splitlines()]
+            ris = next(record for record in records if record['source_format'] == 'ris')
+            self.assertEqual(ris['suggested_labels'].count('provider-specific label'), 1)
+            self.assertEqual(ris['source_fields']['ZZ'], ['Unknown field', 'Second value'])
+
+    def test_invalid_custom_labels_write_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'exports'
+            self.make_exports(root)
+            output = Path(directory) / 'bad-labels'
+            with self.assertRaisesRegex(ValueError, 'must not be empty'):
+                label_exports(root, output, labeler=lambda record: [''])
+            self.assertFalse(output.exists())
+            with self.assertRaisesRegex(ValueError, 'not a single string'):
+                label_exports(root, output, labeler=lambda record: 'label')
+            self.assertFalse(output.exists())
+
     def test_notebook_local_data_workflow(self):
         notebook = json.loads(Path('docs_agent/label_exports.ipynb').read_text())
         code_cells = [''.join(c['source']) for c in notebook['cells'] if c['cell_type'] == 'code']
@@ -87,11 +132,23 @@ class LabelExportTests(unittest.TestCase):
             exec('from pathlib import Path\nimport json, shutil, tempfile', namespace)
             for cell in code_cells[2:]:
                 cell = cell.replace('Path("/content/drive/MyDrive/QMatrix")', 'test_data_root')
+                if '# def custom_labels(' in cell:
+                    # Enable the actual commented customization example.
+                    lines = cell.splitlines(keepends=True)
+                    enabled = False
+                    for index, line in enumerate(lines):
+                        if line.startswith('# def custom_labels('):
+                            enabled = True
+                        if enabled and line.startswith('# '):
+                            lines[index] = line[2:]
+                    cell = ''.join(lines)
                 exec(cell, namespace)
             run = namespace['RUN_OUTPUT']
             self.assertTrue((run / 'prepared/by_database/Scopus.ris').exists())
             self.assertTrue((run / 'labels/labelled_records.csv').exists())
             self.assertEqual(json.loads((run / 'run_metadata.json').read_text())['records'], 3)
+            self.assertTrue(json.loads((run / 'run_metadata.json').read_text())['custom_labeling'])
+            self.assertTrue(namespace['summary']['labeling_method'].startswith('Custom callback:'))
 
 
 if __name__ == '__main__':
