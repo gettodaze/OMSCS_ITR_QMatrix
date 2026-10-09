@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import re
 from collections import defaultdict
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Mapping
@@ -140,11 +140,21 @@ def read_records(path: Path) -> list[SourceRecord]:
     return [SourceRecord.from_csv_row(row) for row in frame.to_dict(orient="records")]
 
 
-def update_records(records: list[SourceRecord]) -> list[SourceRecord]:
-    import IPython
+def get_labels(record: SourceRecord) -> list[str]:
+    """Return labels for a record; implement labeling logic here."""
+    breakpoint()
+    return []
 
-    IPython.embed()
-    pass
+
+def update_records(records: list[SourceRecord]) -> list[SourceRecord]:
+    """Return copies with labels appended to notes, preserving the originals."""
+    result = []
+    for record in records:
+        labels = get_labels(record)
+        label_note = f"Labels: {labels}"
+        notes = f"{record.notes} | {label_note}" if record.notes else label_note
+        result.append(replace(record, notes=notes))
+    return result
 
 
 def write_records(records: list[SourceRecord], output_root: Path) -> Path:
