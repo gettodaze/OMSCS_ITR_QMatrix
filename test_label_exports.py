@@ -2,6 +2,9 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import re
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -149,6 +152,30 @@ class LabelExportTests(unittest.TestCase):
             self.assertEqual(json.loads((run / 'run_metadata.json').read_text())['records'], 3)
             self.assertTrue(json.loads((run / 'run_metadata.json').read_text())['custom_labeling'])
             self.assertTrue(namespace['summary']['labeling_method'].startswith('Custom callback:'))
+
+    def test_notebook_fetches_exact_pinned_revision(self):
+        notebook = json.loads(Path('docs_agent/label_exports.ipynb').read_text())
+        setup = next(''.join(c['source']) for c in notebook['cells']
+                     if c['cell_type'] == 'code' and 'CODE_URL =' in ''.join(c['source']))
+        revision = re.search(r'CODE_REF = "([0-9a-f]{40})"', setup).group(1)
+        for filename in ('label_exports.py', 'parse_records.py'):
+            self.assertIn(f'/blob/{revision}/{filename}', json.dumps(notebook))
+        # Fetch the real pinned commit from this checkout, without networking.
+        setup = setup.replace('https://github.com/gettodaze/OMSCS_ITR_QMatrix.git', str(Path.cwd()))
+        old_path = sys.path[:]
+        modules = {name: sys.modules.get(name) for name in ('parse_records', 'prepare_rayyan', 'label_exports')}
+        namespace = {}
+        try:
+            exec(setup, namespace)
+            self.assertEqual(namespace['CODE_REVISION'], revision)
+            result = subprocess.check_output(['git', 'branch', '--show-current'],
+                                             cwd=namespace['CODE_ROOT'], text=True)
+            self.assertEqual(result.strip(), '')
+        finally:
+            sys.path[:] = old_path
+            for name, module in modules.items():
+                if module is not None:
+                    sys.modules[name] = module
 
 
 if __name__ == '__main__':
