@@ -114,9 +114,7 @@ class OutputRecord:
         ' and ' separator. Venue maps to journal, including conference venues.
         Source-only screening metadata remains available on SourceRecord.
         """
-        authors = tuple(
-            re.sub(r"\s*\(\d+\)$", "", author) for author in record.authors
-        )
+        authors = tuple(re.sub(r"\s*\(\d+\)$", "", author) for author in record.authors)
         return cls(
             key=record.id,
             title=record.title,
@@ -140,6 +138,13 @@ def read_records(path: Path) -> list[SourceRecord]:
     # Read strings and preserve empty fields instead of converting them to NaN.
     frame = pd.read_csv(path, dtype=str, keep_default_na=False, encoding="utf-8-sig")
     return [SourceRecord.from_csv_row(row) for row in frame.to_dict(orient="records")]
+
+
+def update_records(records: list[SourceRecord]) -> list[SourceRecord]:
+    import IPython
+
+    IPython.embed()
+    pass
 
 
 def write_records(records: list[SourceRecord], output_root: Path) -> Path:
@@ -168,6 +173,7 @@ def main() -> None:
 
     # Read, convert, and write the records.
     records = read_records(args.input)
+    records = update_records(records)
     directory = write_records(records, args.output)
     print(f"Wrote {len(records)} records to {directory}")
 
