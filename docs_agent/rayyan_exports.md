@@ -6,6 +6,8 @@ The [manual database search page](manual_search_links.md) gives database-specifi
 
 ## Save exports
 
+Database exports and derived files stay local in the ignored `input/` and `output/` directories. See [data sharing](data_sharing.md) before publishing records or uploading them to an external service.
+
 Keep each database in its own directory, with separate files for queries and batches:
 
 ```text

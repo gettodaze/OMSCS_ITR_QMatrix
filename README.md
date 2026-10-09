@@ -2,6 +2,8 @@
 
 ### AI generated documentation
 
+- [Data sharing](docs_agent/data_sharing.md): Export permissions and private storage.
+
 - [Usage and setup](docs_agent/usage.md): Credentials and execution instructions.
 - [Rayyan exports](docs_agent/rayyan_exports.md): Native export preparation and auditing.
 - [CSV conversion](docs_agent/csv_conversion.md): Input conversion workflow.

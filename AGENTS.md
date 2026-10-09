@@ -9,3 +9,8 @@ are welcome.
 
 Preserve human-authored README content, including the Documentation and AI Usage
 sections, unless the user explicitly requests changes to it.
+
+Keep database exports, abstracts, candidate records and derived record files
+local and untracked in the ignored `input/` and `output/` directories. Do not
+force-add these files or include their contents in public documentation or test
+fixtures. Use synthetic records for shared examples and tests.

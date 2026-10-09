@@ -1,2 +1,8 @@
 __pycache__
 /config.py
+
+# Database exports and derived records stay local.
+/input/
+/output/
+/input.csv
+/excel-example.csv
