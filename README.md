@@ -1,5 +1,17 @@
 Run with [uv](https://docs.astral.sh/uv/):
 
+## Manual searches without API keys
+
+Use the [manual search links and copyable queries](docs_agent/manual_search_links.md). PubMed links contain the query; IEEE links use a browser URL pattern that still needs validation. Scopus, Web of Science, EBSCO, and ACM have launch links with queries to paste and instructions for manual filters.
+
+Regenerate the document without making database requests:
+
+```bash
+uv run --no-project --with-requirements requirements.txt python manual_search_links.py
+```
+
+Supply your library's access links with `--psycinfo-url 'https://…'` and `--eric-url 'https://…'` if the generic EBSCO launch page does not route to your institution. The generator does not open a browser or execute searches.
+
 ## API credentials
 
 Start with PubMed: this runner only requires your email address for that database. The other automated databases need API credentials or institutional access. The runner has passed offline tests; live provider access and query compatibility remain unverified.
@@ -80,6 +92,7 @@ The extraction saves raw metadata. It does **not** convert those files into `inp
 ## Documentation
 
 - Agent docs: [CSV conversion](docs_agent/csv_conversion.md) and [database searches](docs_agent/database_search.md).
+- Manual workflow: [search links and queries](docs_agent/manual_search_links.md).
 - Copy of Chris's working doc from google drive: [Check-in 2 working doc](<docs_human/Check-in 2 working doc.md>)
 
 ## AI Usage
