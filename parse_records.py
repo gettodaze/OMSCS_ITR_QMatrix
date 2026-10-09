@@ -1,7 +1,7 @@
-"""Parse input.csv into one example-shaped CSV per database.
+"""Parse input/input.csv into one example-shaped CSV per database.
 
 Run: python parse_records.py
-Defaults: input.csv -> output/yyyymmdd_hhss/<database>.csv
+Defaults: input/input.csv -> output/yyyymmdd_hhss/<database>.csv
 Each record belongs to its alphabetically first database (case-insensitive).
 Unavailable bibliographic fields remain blank; no external lookup is performed.
 """
@@ -88,7 +88,7 @@ class SourceRecord:
 # Convert source rows to the example's output columns.
 @dataclass(frozen=True)
 class OutputRecord:
-    """Column names and order match excel-example.csv."""
+    """Column names and order match input/excel-example.csv."""
 
     key: str
     title: str
@@ -167,7 +167,7 @@ def write_records(records: list[SourceRecord], output_root: Path) -> Path:
 def main() -> None:
     # Parse command-line paths.
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input", nargs="?", type=Path, default=Path("input.csv"))
+    parser.add_argument("input", nargs="?", type=Path, default=Path("input/input.csv"))
     parser.add_argument("--output", type=Path, default=Path("output"))
     args = parser.parse_args()
 

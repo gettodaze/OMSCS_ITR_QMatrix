@@ -1,0 +1,27 @@
+"""Copy to config.py and fill in values for the databases you want to run.
+
+config.py is ignored by Git. Leave unused and optional settings empty.
+"""
+
+# PubMed: email is required; the API key is optional.
+NCBI_EMAIL = ""
+NCBI_API_KEY = ""
+
+# Scopus: API entitlement is required; institutional token is optional.
+SCOPUS_API_KEY = ""
+SCOPUS_INST_TOKEN = ""
+
+# Web of Science: requires an Expanded API key with Core Collection access.
+WOS_API_KEY = ""
+
+# EBSCO: current authentication/session tokens, shared by PsycInfo and ERIC.
+EBSCO_AUTH_TOKEN = ""
+EBSCO_SESSION_TOKEN = ""
+# Exact ContentProvider facet value for each database you want to search.
+EBSCO_PSYCINFO_PROVIDER = ""
+EBSCO_ERIC_PROVIDER = ""
+
+# IEEE Xplore: metadata API key.
+IEEE_API_KEY = ""
+
+# ACM DL uses manual export and needs no configuration here.

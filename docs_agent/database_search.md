@@ -11,9 +11,21 @@ Writes raw JSON/XML and `summary.csv` under `output/yyyymmdd_hhss/`.
 Dates match the documented search filter, **2021–2027**; reruns can differ from the October 8 results.
 These results require screening and cross-database deduplication before CSV conversion.
 
-Credentials are environment variables:
+Credentials are Python string settings in `config.py`, next to the runner. For a fresh checkout:
 
-| Database | Required variables / access |
+```bash
+cp config.py.template config.py
+```
+
+Edit an existing `config.py` directly. It is ignored by Git; the template is tracked and must contain only empty placeholders. Fill in settings for the databases you select; leave unused settings empty. Environment variables and `.env` files are not used for credentials. Query previews work without `config.py`.
+
+For PubMed, fill in `NCBI_EMAIL` in `config.py`, then run:
+
+```bash
+uv run --no-project --with-requirements requirements.txt python search_databases.py --database "PubMed" --execute
+```
+
+| Database | Required config settings / access |
 | --- | --- |
 | Scopus | `SCOPUS_API_KEY`; optional `SCOPUS_INST_TOKEN`; institutional entitlement |
 | Web of Science | `WOS_API_KEY` for **Expanded API**, including Core Collection |
@@ -23,6 +35,7 @@ Credentials are environment variables:
 | ACM DL | Manual export; search API access has not been verified |
 
 EBSCO needs institution-issued EDS tokens and a profile supporting `TI`, `AB`, `KW`, `LA`, and the `DT1` date limiter. Verify these with the API's Info endpoint before a live search. Renew expired tokens through your institution's EDS authentication flow.
+Store refreshed tokens in `config.py`; the runner does not renew them automatically. See the [README](../README.md#api-credentials) for signup links and token setup.
 IEEE API queries are split further to satisfy its two-wildcard limit; English eligibility requires screening. ACM queries are included in the preview and saved plan for manual use.
 No live searches have been tested.
 

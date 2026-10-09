@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -16,6 +15,14 @@ from itertools import product
 from pathlib import Path
 
 import requests
+
+# Allow query previews from a fresh checkout before private config is created.
+try:
+    import config
+except ModuleNotFoundError as exc:
+    if exc.name != "config":
+        raise
+    config = None
 
 
 # Three final search concepts, transcribed from the working document.
@@ -112,9 +119,10 @@ def build_plans() -> tuple[SearchPlan, ...]:
 
 
 def required(name: str) -> str:
-    if not os.getenv(name):
-        raise ValueError(f"Set {name} before executing this database")
-    return os.environ[name]
+    value = getattr(config, name, "").strip()
+    if not value:
+        raise ValueError(f"Set {name} in config.py (copy config.py.template) before executing this database")
+    return value
 
 
 class Client:
@@ -147,8 +155,8 @@ def search_page(client: Client, database: str, query: str, offset: int) -> tuple
     # Provider-specific authentication, paging and response shapes.
     if database == "Scopus":
         headers = {"X-ELS-APIKey": required("SCOPUS_API_KEY"), "Accept": "application/json"}
-        if os.getenv("SCOPUS_INST_TOKEN"):
-            headers["X-ELS-Insttoken"] = os.environ["SCOPUS_INST_TOKEN"]
+        if getattr(config, "SCOPUS_INST_TOKEN", ""):
+            headers["X-ELS-Insttoken"] = config.SCOPUS_INST_TOKEN
         data = client.get("https://api.elsevier.com/content/search/scopus",
                           {"query": query, "start": offset, "count": 25}, headers)["search-results"]
         total = int(data["opensearch:totalResults"])
@@ -184,8 +192,8 @@ def run_search(plan: SearchPlan, client: Client) -> list[dict]:
     # PubMed search returns IDs; fetch complete metadata in XML batches.
     if plan.database == "PubMed":
         common = {"db": "pubmed", "tool": "qmatrix_search", "email": required("NCBI_EMAIL")}
-        if os.getenv("NCBI_API_KEY"):
-            common["api_key"] = os.environ["NCBI_API_KEY"]
+        if getattr(config, "NCBI_API_KEY", ""):
+            common["api_key"] = config.NCBI_API_KEY
         data = client.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
                           {**common, "term": plan.queries[0], "retmode": "json", "retmax": 10000})["esearchresult"]
         ids = data["idlist"]

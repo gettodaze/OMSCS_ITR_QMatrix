@@ -6,6 +6,8 @@
 
 Use Python 3.10 or newer and uv. The dependencies are listed in `requirements.txt`.
 
+CSV conversion does not need API credentials or `config.py`. That private file is used by the separate database search runner; see the [README](../README.md#api-credentials) for configuration.
+
 The normal command is:
 
 ```bash

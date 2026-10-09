@@ -1,7 +1,7 @@
 """Offline checks: python -m unittest test_search_databases -v."""
 
-import os
 import unittest
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from search_databases import CONCEPTS, SearchPlan, build_plans, run_search, search_page
@@ -42,7 +42,7 @@ class SearchTests(unittest.TestCase):
         client.get.return_value = {"search-results": {
             "opensearch:totalResults": "0", "entry": [{"error": "No results"}],
         }}
-        with patch.dict(os.environ, {"SCOPUS_API_KEY": "test"}):
+        with patch("search_databases.config", SimpleNamespace(SCOPUS_API_KEY="test")):
             self.assertEqual(search_page(client, "Scopus", "query", 0), ([], 0))
 
     def test_ebsco_restricts_provider_and_dates(self):
@@ -50,8 +50,9 @@ class SearchTests(unittest.TestCase):
         client.get.return_value = {"SearchResult": {
             "Data": {"Records": []}, "Statistics": {"TotalHits": 0},
         }}
-        with patch.dict(os.environ, {"EBSCO_ERIC_PROVIDER": "ERIC", "EBSCO_AUTH_TOKEN": "test",
-                                    "EBSCO_SESSION_TOKEN": "test"}):
+        with patch("search_databases.config", SimpleNamespace(
+            EBSCO_ERIC_PROVIDER="ERIC", EBSCO_AUTH_TOKEN="test", EBSCO_SESSION_TOKEN="test"
+        )):
             search_page(client, "ERIC", "query", 100)
         params = client.get.call_args.args[1]
         self.assertEqual(params["pagenumber"], 2)
@@ -61,7 +62,7 @@ class SearchTests(unittest.TestCase):
     def test_pubmed_fetches_xml_and_detects_truncation(self):
         client = Mock()
         client.get.side_effect = [{"esearchresult": {"idlist": ["1", "2"], "count": "2"}}, "<xml/>"]
-        with patch.dict(os.environ, {"NCBI_EMAIL": "test@example.org"}):
+        with patch("search_databases.config", SimpleNamespace(NCBI_EMAIL="test@example.org")):
             self.assertEqual(run_search(SearchPlan("PubMed", ("query",)), client),
                              [{"pmid": "1"}, {"pmid": "2"}])
             self.assertTrue(client.get.call_args.kwargs["xml"])
@@ -71,9 +72,26 @@ class SearchTests(unittest.TestCase):
 
     def test_default_preview_makes_no_network_requests(self):
         from search_databases import main
-        with patch("sys.argv", ["search_databases.py"]), patch("builtins.print"), \
+        with patch("search_databases.config", None), \
+                patch("sys.argv", ["search_databases.py"]), patch("builtins.print"), \
                 patch("requests.Session.get", side_effect=AssertionError("Network forbidden")):
             main()
+
+    def test_missing_config_fails_before_api_request(self):
+        client = Mock()
+        with patch("search_databases.config", None):
+            with self.assertRaisesRegex(ValueError, "SCOPUS_API_KEY in config.py"):
+                search_page(client, "Scopus", "query", 0)
+        client.get.assert_not_called()
+
+    def test_optional_scopus_token_from_config(self):
+        client = Mock()
+        client.get.return_value = {"search-results": {"opensearch:totalResults": "0"}}
+        with patch("search_databases.config", SimpleNamespace(
+            SCOPUS_API_KEY="test-key", SCOPUS_INST_TOKEN="test-token"
+        )):
+            search_page(client, "Scopus", "query", 0)
+        self.assertEqual(client.get.call_args.args[2]["X-ELS-Insttoken"], "test-token")
 
 
 if __name__ == "__main__":
