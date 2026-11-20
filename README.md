@@ -13,6 +13,7 @@ Input and output files are ignored by Git because database licenses and abstract
 - [CSV conversion](docs_agent/csv_conversion.md): Input conversion workflow.
 - [Database searches](docs_agent/database_search.md): Search scope and implementation.
 - [Manual search links](docs_agent/manual_search_links.md): Database links and copyable queries.
+- [Search and screening](search_and_screening/README.md): Final search strings, export merging, and screening scripts and prompts.
 
 ### Manually generated documentation
 
